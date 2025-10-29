@@ -7,24 +7,24 @@ import "github.com/petrovyuri/go-envied"
 
 // ConfigInterface defines the interface for all generated configurations
 type ConfigInterface interface {
-	GetDATABASE_URL() string
 	GetDEBUG_MODE() bool
 	GetPORT() int
 	GetTEMPERATURE() float64
 	GetMAX_TOKENS() string
+	GetDATABASE_URL() string
 }
+
+// Static key for MAX_TOKENS in dev environment
+var dev_enviedkeyMAX_TOKENS = []int{1449781530, 4028288318}
+
+// Static encrypted data for MAX_TOKENS in dev environment
+var dev_envieddataMAX_TOKENS = []int{1449781547, 4028288270}
 
 // Static key for DATABASE_URL in dev environment
 var dev_enviedkeyDATABASE_URL = []int{1449781530, 4028288318, 417819965, 358674232, 1112285527, 3123658374, 3694091696, 2501759624, 468961263, 292956477, 2265301925, 334514377, 121595214, 4089868386, 2296291581, 3756391431}
 
 // Static encrypted data for DATABASE_URL in dev environment
 var dev_envieddataDATABASE_URL = []int{1449781630, 4028288347, 417819979, 358674197, 1112285491, 3123658471, 3694091716, 2501759721, 468961165, 292956508, 2265301974, 334514348, 121595235, 4089868311, 2296291471, 3756391531}
-
-// Static key for MAX_TOKENS in dev environment
-var dev_enviedkeyMAX_TOKENS = []int{1449781530, 4028288318, 417819965, 358674232}
-
-// Static encrypted data for MAX_TOKENS in dev environment
-var dev_envieddataMAX_TOKENS = []int{1449781560, 4028288271, 417819917, 358674202}
 
 // DevConfigConfig - generated configuration for dev environment
 type DevConfigConfig struct {
@@ -74,32 +74,40 @@ var prod_enviedkeyDATABASE_URL = []int{1449781530, 4028288318, 417819965, 358674
 var prod_envieddataDATABASE_URL = []int{1449781610, 4028288332, 417819986, 358674268, 1112285562, 3123658466, 3694091729, 2501759740, 468961166, 292956511, 2265301956, 334514362, 121595179, 4089868367, 2296291464, 3756391541, 3804484452}
 
 // Static key for MAX_TOKENS in prod environment
-var prod_enviedkeyMAX_TOKENS = []int{1449781530, 4028288318, 417819965, 358674232, 1112285527, 3123658374}
+var prod_enviedkeyMAX_TOKENS = []int{1449781530, 4028288318, 417819965, 358674232}
 
 // Static encrypted data for MAX_TOKENS in prod environment
-var prod_envieddataMAX_TOKENS = []int{1449781560, 4028288271, 417819917, 358674184, 1112285543, 3123658404}
+var prod_envieddataMAX_TOKENS = []int{1449781547, 4028288270, 417819917, 358674184}
 
 // ProdConfigConfig - generated configuration for prod environment
 type ProdConfigConfig struct {
+	TEMPERATURE float64
+	MAX_TOKENS string
 	DATABASE_URL string
 	DEBUG_MODE bool
 	PORT int
-	TEMPERATURE float64
-	MAX_TOKENS string
 }
 
 // NewProdConfigConfig creates a new configuration for prod environment
 func NewProdConfigConfig() *ProdConfigConfig {
 	return &ProdConfigConfig{
+		TEMPERATURE: envied.ParseFloat("0.8"),
+		MAX_TOKENS: envied.DeobfuscateString(prod_enviedkeyMAX_TOKENS, prod_envieddataMAX_TOKENS),
 		DATABASE_URL: envied.DeobfuscateString(prod_enviedkeyDATABASE_URL, prod_envieddataDATABASE_URL),
 		DEBUG_MODE: envied.ParseBool("false"),
 		PORT: envied.ParseInt("80"),
-		TEMPERATURE: envied.ParseFloat("0.8"),
-		MAX_TOKENS: envied.DeobfuscateString(prod_enviedkeyMAX_TOKENS, prod_envieddataMAX_TOKENS),
 	}
 }
 
 // Getter methods for ProdConfigConfig
+func (c *ProdConfigConfig) GetTEMPERATURE() float64 {
+	return c.TEMPERATURE
+}
+
+func (c *ProdConfigConfig) GetMAX_TOKENS() string {
+	return c.MAX_TOKENS
+}
+
 func (c *ProdConfigConfig) GetDATABASE_URL() string {
 	return c.DATABASE_URL
 }
@@ -110,13 +118,5 @@ func (c *ProdConfigConfig) GetDEBUG_MODE() bool {
 
 func (c *ProdConfigConfig) GetPORT() int {
 	return c.PORT
-}
-
-func (c *ProdConfigConfig) GetTEMPERATURE() float64 {
-	return c.TEMPERATURE
-}
-
-func (c *ProdConfigConfig) GetMAX_TOKENS() string {
-	return c.MAX_TOKENS
 }
 

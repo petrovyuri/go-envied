@@ -234,6 +234,31 @@ func extractFieldsFromEnvVars(envVars map[string]string) []Field {
 	return fields
 }
 
+// extractFieldsFromEnvVarsWithMetadata extracts fields from environment variables with quote information
+func extractFieldsFromEnvVarsWithMetadata(envVars map[string]EnvValue) []Field {
+	var fields []Field
+
+	for envName, envValue := range envVars {
+		var fieldType FieldType
+		if envValue.WasQuoted {
+			// If value was quoted, always treat as string
+			fieldType = FieldTypeString
+		} else if envValue.Value == "" {
+			fieldType = FieldTypeString // Empty values are treated as strings
+		} else {
+			fieldType = DetectFieldType(envValue.Value)
+		}
+
+		fields = append(fields, Field{
+			EnvName: envName,
+			Type:    fieldType,
+			Value:   envValue.Value,
+		})
+	}
+
+	return fields
+}
+
 // checkEnvironmentConsistency checks if all environments have the same variables
 func checkEnvironmentConsistency(allEnvVars map[string]map[string]string) error {
 	if len(allEnvVars) < 2 {
@@ -271,6 +296,26 @@ func LoadEnvFile(filePath string) ([]Field, error) {
 	return extractFieldsFromEnvVars(envVars), nil
 }
 
+// unquoteValue removes surrounding quotes from a string value
+// Returns the unquoted value and whether it was originally quoted
+func unquoteValue(value string) (string, bool) {
+	value = strings.TrimSpace(value)
+	// Check if value is quoted (both single and double)
+	if len(value) >= 2 {
+		if (value[0] == '"' && value[len(value)-1] == '"') ||
+			(value[0] == '\'' && value[len(value)-1] == '\'') {
+			return value[1 : len(value)-1], true
+		}
+	}
+	return value, false
+}
+
+// EnvValue stores environment variable value with metadata
+type EnvValue struct {
+	Value     string
+	WasQuoted bool
+}
+
 // ReadEnvFile reads environment variables from a file
 func ReadEnvFile(filename string) (map[string]string, error) {
 	file, err := os.Open(filename)
@@ -296,7 +341,46 @@ func ReadEnvFile(filename string) (map[string]string, error) {
 
 		parts := strings.SplitN(line, "=", 2)
 		if len(parts) == 2 {
-			envVars[parts[0]] = parts[1]
+			key := strings.TrimSpace(parts[0])
+			value, _ := unquoteValue(parts[1])
+			envVars[key] = value
+		}
+	}
+
+	return envVars, nil
+}
+
+// ReadEnvFileWithMetadata reads environment variables from a file with quote information
+func ReadEnvFileWithMetadata(filename string) (map[string]EnvValue, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	envVars := make(map[string]EnvValue)
+
+	// Simple line-by-line reading
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			value, wasQuoted := unquoteValue(parts[1])
+			envVars[key] = EnvValue{
+				Value:     value,
+				WasQuoted: wasQuoted,
+			}
 		}
 	}
 
@@ -346,12 +430,20 @@ func GenerateFromConfigFile(configFilePath string) error {
 		return err
 	}
 
-	// Collect all environment variables from all environments for consistency check
+	// Collect all environment variables from all environments for consistency check and metadata
 	allEnvVars := make(map[string]map[string]string)
+	allEnvVarsWithMetadata := make(map[string]map[string]EnvValue)
 	for envName, envConfig := range configFile.Environments {
-		envVars, err := ReadEnvFile(envConfig.EnvFile)
+		envVarsWithMetadata, err := ReadEnvFileWithMetadata(envConfig.EnvFile)
 		if err != nil {
 			return fmt.Errorf("failed to read env file %s: %w", envConfig.EnvFile, err)
+		}
+		allEnvVarsWithMetadata[envName] = envVarsWithMetadata
+
+		// Convert to simple map for consistency check
+		envVars := make(map[string]string)
+		for k, v := range envVarsWithMetadata {
+			envVars[k] = v.Value
 		}
 		allEnvVars[envName] = envVars
 	}
@@ -382,13 +474,13 @@ func GenerateFromConfigFile(configFilePath string) error {
 			Fields     []Field
 			Obfuscated map[string]*ObfuscationResult
 		}),
-		AllFields: extractFieldsFromEnvVars(allEnvVars["dev"]), // Use dev as reference for interface
+		AllFields: extractFieldsFromEnvVarsWithMetadata(allEnvVarsWithMetadata["dev"]), // Use dev as reference for interface
 	}
 
 	// Prepare fields for each environment
 	for envName, envConfig := range configFile.Environments {
-		envVars := allEnvVars[envName]
-		fields := extractFieldsFromEnvVars(envVars)
+		envVarsWithMetadata := allEnvVarsWithMetadata[envName]
+		fields := extractFieldsFromEnvVarsWithMetadata(envVarsWithMetadata)
 		obfuscated := make(map[string]*ObfuscationResult)
 
 		// Generate obfuscated data for each field
