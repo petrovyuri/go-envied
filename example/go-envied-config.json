@@ -1,0 +1,15 @@
+{
+  "package_name": "config",
+  "output_dir": "../../internal/config",
+  "random_seed": 12345,
+  "environments": {
+    "dev": {
+      "env_file": "../../env/dev.env",
+      "struct_name": "DevConfig"
+    },
+    "prod": {
+      "env_file": "../../env/prod.env",
+      "struct_name": "ProdConfig"
+    }
+  }
+}
