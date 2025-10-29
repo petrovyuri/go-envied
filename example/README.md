@@ -13,7 +13,7 @@ example/
 ├── cmd/
 │   └── generate/
 │       └── main.go         # Configuration generator
-├── generated/              # Generated files (created automatically)
+├── internal/config/        # Package with generated configurations
 ├── main.go                 # Usage example
 └── go.mod                  # Go module
 ```
@@ -32,19 +32,8 @@ This command will create the `generated/config_env.gen.go` file with type-safe c
 ### 2. Run the Example
 
 ```bash
-go run main.go
+go run main.go dev # or prod or any other environment
 ```
-
-### 3. Run with Different Environments
-
-```bash
-# For development (default)
-APP_ENV=dev go run main.go
-
-# For production
-APP_ENV=prod go run main.go
-```
-
 ## What Happens
 
 1. **Generation**: The package reads JSON configuration and `.env` files
