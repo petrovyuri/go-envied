@@ -33,17 +33,17 @@ go get github.com/petrovyuri/go-envied
 ```json
 {
   "package_name": "config",
-  "output_dir": "./internal/config",
-  "environments": {
-    "dev": {
-      "env_file": "./env/dev.env",
+  "output_dir": "path/to/your/package",
+  "environments": [
+    {
+      "env_file": "path/to/your/env/dev.env",
       "struct_name": "DevConfig"
     },
-    "prod": {
-      "env_file": "./env/prod.env",
+    {
+      "env_file": "path/to/your/env/prod.env",
       "struct_name": "ProdConfig"
     }
-  }
+  ]
 }
 ```
 
@@ -51,80 +51,124 @@ go get github.com/petrovyuri/go-envied
 
 **env/dev.env:**
 ```env
-ENV1=your-dev-value-1
-ENV2=123
-ENV3=true
-ENV4=https://example.com/api
-ENV5=30
+# Development environment configuration
+
+# Example of String parsing and obfuscation
+DATABASE_URL=dev-database-url
+# Example of Bool parsing
+DEBUG_MODE=true
+# Example of integer parsing
+PORT=10000
+# Example of float parsing
+TEMPERATURE=0.1
+# Although this is a number, it can be wrapped in quotes,
+# then it will be treated as a string
+# and it will be obfuscated
+MAX_TOKENS="10" 
 ```
 
 **env/prod.env:**
 ```env
-ENV1=your-prod-value-1
-ENV2=456
-ENV3=false
-ENV4=https://api.example.com
-ENV5=7200
+# Production environment configuration
+# Example of String parsing and obfuscation
+DATABASE_URL=prod-database-url
+# Example of Bool parsing
+DEBUG_MODE=false
+# Example of integer parsing
+PORT=80
+# Example of float parsing
+TEMPERATURE=0.8
+# Although this is a number, it can be wrapped in quotes,
+# then it will be treated as a string
+# and it will be obfuscated
+MAX_TOKENS="1000" 
 ```
 
 #### 3. Run Generation
 
 ```bash
-# Create directory cmd/gen_env
-mkdir -p cmd/gen_env
+# Create directory cmd/generate
+mkdir -p cmd/generate
 
 # Create main.go file in this directory
-touch cmd/gen_env/main.go
+touch cmd/generate/main.go
 ```
 
 In this file add the following code:
 ```go
 package main
 
-import "github.com/petrovyuri/go-envied"
+// This file is used to generate the configurations
+
+import (
+	"log"
+
+	"github.com/petrovyuri/go-envied"
+)
 
 func main() {
-	envied.AutoGenerate()
+	log.Printf("🚀 Generating configurations with go-envied...")
+
+	// Automatic generation from JSON configuration
+	err := envied.AutoGenerate()
+	if err != nil {
+		log.Fatalf("❌ Configuration generation error: %v", err)
+	}
+
+	log.Printf("✅ Configurations generated successfully!")
+	log.Printf("📁 Files are located in ./generated directory")
 }
+
 ```
 
 ```bash
 # Run generation
-go run cmd/gen_env/main.go
-```
+go run cmd/generate/main.go
+``` 
 
-In the `internal/config` directory the file `config_env.gen.go` will be generated
+In the `path/to/your/package` directory the file `config_env.gen.go` will be generated
 
 #### 4. Use Generated Configurations
 
 ```go
-package main
+package path/to/your/package
 
 import (
-    "fmt"
-    "your-project/internal/config"
+	"fmt"
 )
 
-func main() {
-    // Dev configuration
-    devConfig := config.NewDevConfigConfig()
-    fmt.Printf("Dev ENV1: %s\n", devConfig.GetENV1())
-    fmt.Printf("Dev ENV2: %d\n", devConfig.GetENV2())
-    
-    // Prod configuration
-    prodConfig := config.NewProdConfigConfig()
-    fmt.Printf("Prod ENV1: %s\n", prodConfig.GetENV1())
-    fmt.Printf("Prod ENV2: %d\n", prodConfig.GetENV2())
-    
-    // Polymorphism through interface
-    configs := []config.ConfigInterface{
-        devConfig,
-        prodConfig,
-    }
-    
-    for i, cfg := range configs {
-        fmt.Printf("Config %d - ENV1: %s\n", i+1, cfg.GetENV1())
-    }
+const (
+	EnvDev  = "dev"
+	EnvProd = "prod"
+)
+
+type Config struct {
+	DATABASE_URL string
+	DEBUG_MODE   bool
+	PORT         int
+	TEMPERATURE  float64
+	MAX_TOKENS   string
+}
+
+func NewConfig(env string) (*Config, error) {
+	// Create configurations for different environments
+	var currentConfig ConfigInterface
+	switch env {
+	case EnvDev:
+		currentConfig = NewDevConfigConfig()
+		fmt.Println("  Using development configuration")
+	default:
+		currentConfig = NewProdConfigConfig()
+		fmt.Printf("  Unknown environment '%s', using development configuration\n", env)
+	}
+
+	return &Config{
+		DATABASE_URL: currentConfig.GetDATABASE_URL(),
+		DEBUG_MODE:   currentConfig.GetDEBUG_MODE(),
+		PORT:         currentConfig.GetPORT(),
+		TEMPERATURE:  currentConfig.GetTEMPERATURE(),
+		MAX_TOKENS:   currentConfig.GetMAX_TOKENS(),
+	}, nil
 }
 ```
 
@@ -165,6 +209,28 @@ func main() {
 4. Add tests
 5. Submit pull request
 
+## 📁 Example
+
+A complete working example of go-envied usage can be found in the [`example/`](example/) folder.
+
+The example includes:
+- Configuration files for different environments (`dev.env`, `prod.env`)
+- JSON configuration (`go-envied-config.json`)
+- Configuration generator (`cmd/generate/main.go`)
+- Main application using generated configurations (`main.go`)
+
+To run the example:
+```bash
+cd example
+go run main.go dev  
+```
+
+or
+
+```bash
+cd example
+go run main.go prod # or any other environment
+```
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
