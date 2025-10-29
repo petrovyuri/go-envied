@@ -13,44 +13,44 @@ func TestParseInt(t *testing.T) {
 		expected int
 	}{
 		{
-			name:     "положительное число",
+			name:     "positive number",
 			input:    "123",
 			expected: 123,
 		},
 		{
-			name:     "отрицательное число",
+			name:     "negative number",
 			input:    "-456",
 			expected: -456,
 		},
 		{
-			name:     "ноль",
+			name:     "zero",
 			input:    "0",
 			expected: 0,
 		},
 		{
-			name:     "большое число",
+			name:     "large number",
 			input:    "2147483647",
 			expected: 2147483647,
 		},
 		{
-			name:     "пустая строка",
+			name:     "empty string",
 			input:    "",
 			expected: 0,
 		},
 		{
-			name:     "невалидная строка",
+			name:     "invalid string",
 			input:    "abc",
 			expected: 0,
 		},
 		{
-			name:     "строка с пробелами",
+			name:     "string with spaces",
 			input:    "  123  ",
-			expected: 0, // strconv.Atoi не обрабатывает пробелы
+			expected: 0, // strconv.Atoi doesn't handle spaces
 		},
 		{
-			name:     "число с плавающей точкой",
+			name:     "float number",
 			input:    "123.45",
-			expected: 0, // strconv.Atoi не обрабатывает float
+			expected: 0, // strconv.Atoi doesn't handle float
 		},
 	}
 
@@ -58,7 +58,7 @@ func TestParseInt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := envied.ParseInt(tt.input)
 			if result != tt.expected {
-				t.Errorf("ParseInt(%q) = %d, ожидалось %d", tt.input, result, tt.expected)
+				t.Errorf("ParseInt(%q) = %d, expected %d", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -121,19 +121,19 @@ func TestParseBool(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "пустая строка",
+			name:     "empty string",
 			input:    "",
 			expected: false,
 		},
 		{
-			name:     "невалидная строка",
+			name:     "invalid string",
 			input:    "maybe",
 			expected: false,
 		},
 		{
-			name:     "строка с пробелами",
+			name:     "string with spaces",
 			input:    " true ",
-			expected: false, // strconv.ParseBool не обрабатывает пробелы
+			expected: false, // strconv.ParseBool doesn't handle spaces
 		},
 	}
 
@@ -141,7 +141,7 @@ func TestParseBool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := envied.ParseBool(tt.input)
 			if result != tt.expected {
-				t.Errorf("ParseBool(%q) = %v, ожидалось %v", tt.input, result, tt.expected)
+				t.Errorf("ParseBool(%q) = %v, expected %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -154,54 +154,54 @@ func TestParseFloat(t *testing.T) {
 		expected float64
 	}{
 		{
-			name:     "положительное число",
+			name:     "positive number",
 			input:    "123.45",
 			expected: 123.45,
 		},
 		{
-			name:     "отрицательное число",
+			name:     "negative number",
 			input:    "-456.78",
 			expected: -456.78,
 		},
 		{
-			name:     "целое число",
+			name:     "integer number",
 			input:    "123",
 			expected: 123.0,
 		},
 		{
-			name:     "ноль",
+			name:     "zero",
 			input:    "0",
 			expected: 0.0,
 		},
 		{
-			name:     "ноль с точкой",
+			name:     "zero with dot",
 			input:    "0.0",
 			expected: 0.0,
 		},
 		{
-			name:     "научная нотация",
+			name:     "scientific notation",
 			input:    "1.23e+02",
 			expected: 123.0,
 		},
 		{
-			name:     "отрицательная научная нотация",
+			name:     "negative scientific notation",
 			input:    "-1.23e-02",
 			expected: -0.0123,
 		},
 		{
-			name:     "пустая строка",
+			name:     "empty string",
 			input:    "",
 			expected: 0.0,
 		},
 		{
-			name:     "невалидная строка",
+			name:     "invalid string",
 			input:    "abc",
 			expected: 0.0,
 		},
 		{
-			name:     "строка с пробелами",
+			name:     "string with spaces",
 			input:    "  123.45  ",
-			expected: 0.0, // strconv.ParseFloat не обрабатывает пробелы
+			expected: 0.0, // strconv.ParseFloat doesn't handle spaces
 		},
 	}
 
@@ -209,7 +209,7 @@ func TestParseFloat(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := envied.ParseFloat(tt.input)
 			if result != tt.expected {
-				t.Errorf("ParseFloat(%q) = %f, ожидалось %f", tt.input, result, tt.expected)
+				t.Errorf("ParseFloat(%q) = %f, expected %f", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -222,39 +222,39 @@ func TestObfuscateString(t *testing.T) {
 		seed  int64
 	}{
 		{
-			name:  "обычная строка",
+			name:  "regular string",
 			input: "hello world",
 			seed:  12345,
 		},
 		{
-			name:  "пустая строка",
+			name:  "empty string",
 			input: "",
 			seed:  12345,
 		},
 		{
-			name:  "строка с символами",
+			name:  "string with symbols",
 			input: "!@#$%^&*()",
 			seed:  12345,
 		},
 		{
-			name:  "строка с кириллицей",
+			name:  "string with cyrillic",
 			input: "привет мир",
 			seed:  12345,
 		},
 		{
-			name:  "длинная строка",
+			name:  "long string",
 			input: "это очень длинная строка для тестирования обфускации",
 			seed:  12345,
 		},
 		{
-			name:  "строка с числами",
+			name:  "string with numbers",
 			input: "1234567890",
 			seed:  12345,
 		},
 		{
-			name:  "случайный seed",
+			name:  "random seed",
 			input: "test string",
-			seed:  0, // будет использован случайный seed
+			seed:  0, // will use random seed
 		},
 	}
 
@@ -262,22 +262,22 @@ func TestObfuscateString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			keys, encryptedValues := envied.ObfuscateString(tt.input, tt.seed)
 
-			// Проверяем, что длины массивов совпадают
+			// Check that array lengths match
 			if len(keys) != len(encryptedValues) {
-				t.Errorf("Длины ключей (%d) и зашифрованных значений (%d) не совпадают",
+				t.Errorf("Key lengths (%d) and encrypted values (%d) don't match",
 					len(keys), len(encryptedValues))
 			}
 
-			// Проверяем, что длина соответствует длине входной строки
+			// Check that length matches input string length
 			if len(keys) != len([]rune(tt.input)) {
-				t.Errorf("Длина ключей (%d) не соответствует длине входной строки (%d)",
+				t.Errorf("Key length (%d) doesn't match input string length (%d)",
 					len(keys), len([]rune(tt.input)))
 			}
 
-			// Проверяем, что можно расшифровать обратно
+			// Check that we can decrypt back
 			decrypted := envied.DeobfuscateString(keys, encryptedValues)
 			if decrypted != tt.input {
-				t.Errorf("Расшифрованная строка (%q) не совпадает с исходной (%q)",
+				t.Errorf("Decrypted string (%q) doesn't match original (%q)",
 					decrypted, tt.input)
 			}
 		})
@@ -292,19 +292,19 @@ func TestDeobfuscateString(t *testing.T) {
 		expected        string
 	}{
 		{
-			name:            "пустые массивы",
+			name:            "empty arrays",
 			keys:            []int{},
 			encryptedValues: []int{},
 			expected:        "",
 		},
 		{
-			name:            "разные длины массивов",
+			name:            "different array lengths",
 			keys:            []int{1, 2},
 			encryptedValues: []int{3},
 			expected:        "",
 		},
 		{
-			name:            "один символ",
+			name:            "single character",
 			keys:            []int{100},
 			encryptedValues: []int{100 ^ int('a')}, // 'a' = 97
 			expected:        "a",
@@ -315,7 +315,7 @@ func TestDeobfuscateString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := envied.DeobfuscateString(tt.keys, tt.encryptedValues)
 			if result != tt.expected {
-				t.Errorf("DeobfuscateString() = %q, ожидалось %q", result, tt.expected)
+				t.Errorf("DeobfuscateString() = %q, expected %q", result, tt.expected)
 			}
 		})
 	}
@@ -339,7 +339,7 @@ func TestObfuscateDeobfuscateRoundTrip(t *testing.T) {
 			decrypted := envied.DeobfuscateString(keys, encryptedValues)
 
 			if decrypted != testString {
-				t.Errorf("Ошибка в цикле шифрование-расшифровка: исходная строка %q, результат %q",
+				t.Errorf("Error in encrypt-decrypt round trip: original string %q, result %q",
 					testString, decrypted)
 			}
 		})

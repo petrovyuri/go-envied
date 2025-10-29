@@ -15,32 +15,32 @@ func TestDetectFieldType(t *testing.T) {
 		expected envied.FieldType
 	}{
 		{
-			name:     "целое число",
+			name:     "integer number",
 			input:    "123",
 			expected: envied.FieldTypeInt,
 		},
 		{
-			name:     "отрицательное число",
+			name:     "negative number",
 			input:    "-456",
 			expected: envied.FieldTypeInt,
 		},
 		{
-			name:     "ноль",
+			name:     "zero",
 			input:    "0",
 			expected: envied.FieldTypeBool,
 		},
 		{
-			name:     "число с плавающей точкой",
+			name:     "float number",
 			input:    "123.45",
 			expected: envied.FieldTypeFloat,
 		},
 		{
-			name:     "отрицательное число с плавающей точкой",
+			name:     "negative float number",
 			input:    "-456.78",
 			expected: envied.FieldTypeFloat,
 		},
 		{
-			name:     "научная нотация",
+			name:     "scientific notation",
 			input:    "1.23e+02",
 			expected: envied.FieldTypeFloat,
 		},
@@ -85,17 +85,17 @@ func TestDetectFieldType(t *testing.T) {
 			expected: envied.FieldTypeBool,
 		},
 		{
-			name:     "обычная строка",
+			name:     "regular string",
 			input:    "hello world",
 			expected: envied.FieldTypeString,
 		},
 		{
-			name:     "пустая строка",
+			name:     "empty string",
 			input:    "",
 			expected: envied.FieldTypeString,
 		},
 		{
-			name:     "строка с символами",
+			name:     "string with symbols",
 			input:    "!@#$%^&*()",
 			expected: envied.FieldTypeString,
 		},
@@ -105,12 +105,12 @@ func TestDetectFieldType(t *testing.T) {
 			expected: envied.FieldTypeString,
 		},
 		{
-			name:     "невалидное число",
+			name:     "invalid number",
 			input:    "123abc",
 			expected: envied.FieldTypeString,
 		},
 		{
-			name:     "строка с пробелами",
+			name:     "string with spaces",
 			input:    "  hello  ",
 			expected: envied.FieldTypeString,
 		},
@@ -120,18 +120,18 @@ func TestDetectFieldType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := envied.DetectFieldType(tt.input)
 			if result != tt.expected {
-				t.Errorf("DetectFieldType(%q) = %v, ожидалось %v", tt.input, result, tt.expected)
+				t.Errorf("DetectFieldType(%q) = %v, expected %v", tt.input, result, tt.expected)
 			}
 		})
 	}
 }
 
 func TestLoadEnvFile(t *testing.T) {
-	// Создаем временный .env файл для тестирования
+	// Create temporary .env file for testing
 	tempDir := t.TempDir()
 	envFile := filepath.Join(tempDir, "test.env")
 
-	envContent := `# Тестовый .env файл
+	envContent := `# Test .env file
 STRING_VALUE=hello world
 INT_VALUE=123
 FLOAT_VALUE=123.45
@@ -146,137 +146,137 @@ MULTILINE_VALUE2=line2
 
 	err := os.WriteFile(envFile, []byte(envContent), 0644)
 	if err != nil {
-		t.Fatalf("Не удалось создать тестовый .env файл: %v", err)
+		t.Fatalf("Failed to create test .env file: %v", err)
 	}
 
-	// Тестируем загрузку файла
+	// Test file loading
 	fields, err := envied.LoadEnvFile(envFile)
 	if err != nil {
-		t.Fatalf("LoadEnvFile() вернул ошибку: %v", err)
+		t.Fatalf("LoadEnvFile() returned error: %v", err)
 	}
 
-	// Проверяем количество полей
-	expectedCount := 10 // все поля включая EMPTY_VALUE
+	// Check field count
+	expectedCount := 10 // all fields including EMPTY_VALUE
 	if len(fields) != expectedCount {
-		t.Errorf("Ожидалось %d полей, получено %d", expectedCount, len(fields))
+		t.Errorf("Expected %d fields, got %d", expectedCount, len(fields))
 	}
 
-	// Проверяем конкретные поля
+	// Check specific fields
 	fieldMap := make(map[string]envied.Field)
 	for _, field := range fields {
 		fieldMap[field.EnvName] = field
 	}
 
-	// Проверяем STRING_VALUE
+	// Check STRING_VALUE
 	if field, exists := fieldMap["STRING_VALUE"]; exists {
 		if field.Value != "hello world" {
-			t.Errorf("STRING_VALUE = %q, ожидалось %q", field.Value, "hello world")
+			t.Errorf("STRING_VALUE = %q, expected %q", field.Value, "hello world")
 		}
 		if field.Type != envied.FieldTypeString {
-			t.Errorf("STRING_VALUE тип = %v, ожидалось %v", field.Type, envied.FieldTypeString)
+			t.Errorf("STRING_VALUE type = %v, expected %v", field.Type, envied.FieldTypeString)
 		}
 	} else {
-		t.Error("STRING_VALUE не найден")
+		t.Error("STRING_VALUE not found")
 	}
 
-	// Проверяем INT_VALUE
+	// Check INT_VALUE
 	if field, exists := fieldMap["INT_VALUE"]; exists {
 		if field.Value != "123" {
-			t.Errorf("INT_VALUE = %q, ожидалось %q", field.Value, "123")
+			t.Errorf("INT_VALUE = %q, expected %q", field.Value, "123")
 		}
 		if field.Type != envied.FieldTypeInt {
-			t.Errorf("INT_VALUE тип = %v, ожидалось %v", field.Type, envied.FieldTypeInt)
+			t.Errorf("INT_VALUE type = %v, expected %v", field.Type, envied.FieldTypeInt)
 		}
 	} else {
-		t.Error("INT_VALUE не найден")
+		t.Error("INT_VALUE not found")
 	}
 
-	// Проверяем FLOAT_VALUE
+	// Check FLOAT_VALUE
 	if field, exists := fieldMap["FLOAT_VALUE"]; exists {
 		if field.Value != "123.45" {
-			t.Errorf("FLOAT_VALUE = %q, ожидалось %q", field.Value, "123.45")
+			t.Errorf("FLOAT_VALUE = %q, expected %q", field.Value, "123.45")
 		}
 		if field.Type != envied.FieldTypeFloat {
-			t.Errorf("FLOAT_VALUE тип = %v, ожидалось %v", field.Type, envied.FieldTypeFloat)
+			t.Errorf("FLOAT_VALUE type = %v, expected %v", field.Type, envied.FieldTypeFloat)
 		}
 	} else {
-		t.Error("FLOAT_VALUE не найден")
+		t.Error("FLOAT_VALUE not found")
 	}
 
-	// Проверяем BOOL_VALUE
+	// Check BOOL_VALUE
 	if field, exists := fieldMap["BOOL_VALUE"]; exists {
 		if field.Value != "true" {
-			t.Errorf("BOOL_VALUE = %q, ожидалось %q", field.Value, "true")
+			t.Errorf("BOOL_VALUE = %q, expected %q", field.Value, "true")
 		}
 		if field.Type != envied.FieldTypeBool {
-			t.Errorf("BOOL_VALUE тип = %v, ожидалось %v", field.Type, envied.FieldTypeBool)
+			t.Errorf("BOOL_VALUE type = %v, expected %v", field.Type, envied.FieldTypeBool)
 		}
 	} else {
-		t.Error("BOOL_VALUE не найден")
+		t.Error("BOOL_VALUE not found")
 	}
 
-	// Проверяем EMPTY_VALUE
+	// Check EMPTY_VALUE
 	if field, exists := fieldMap["EMPTY_VALUE"]; exists {
 		if field.Value != "" {
-			t.Errorf("EMPTY_VALUE = %q, ожидалось пустую строку", field.Value)
+			t.Errorf("EMPTY_VALUE = %q, expected empty string", field.Value)
 		}
 		if field.Type != envied.FieldTypeString {
-			t.Errorf("EMPTY_VALUE тип = %v, ожидалось %v", field.Type, envied.FieldTypeString)
+			t.Errorf("EMPTY_VALUE type = %v, expected %v", field.Type, envied.FieldTypeString)
 		}
 	} else {
-		t.Error("EMPTY_VALUE не найден")
+		t.Error("EMPTY_VALUE not found")
 	}
 }
 
 func TestLoadEnvFileNotFound(t *testing.T) {
-	// Тестируем загрузку несуществующего файла
+	// Test loading non-existent file
 	_, err := envied.LoadEnvFile("nonexistent.env")
 	if err == nil {
-		t.Error("LoadEnvFile() должен вернуть ошибку для несуществующего файла")
+		t.Error("LoadEnvFile() should return error for non-existent file")
 	}
 }
 
 func TestLoadEnvFileEmpty(t *testing.T) {
-	// Создаем пустой .env файл
+	// Create empty .env file
 	tempDir := t.TempDir()
 	envFile := filepath.Join(tempDir, "empty.env")
 
 	err := os.WriteFile(envFile, []byte(""), 0644)
 	if err != nil {
-		t.Fatalf("Не удалось создать пустой .env файл: %v", err)
+		t.Fatalf("Failed to create empty .env file: %v", err)
 	}
 
 	fields, err := envied.LoadEnvFile(envFile)
 	if err != nil {
-		t.Fatalf("LoadEnvFile() вернул ошибку: %v", err)
+		t.Fatalf("LoadEnvFile() returned error: %v", err)
 	}
 
 	if len(fields) != 0 {
-		t.Errorf("Ожидалось 0 полей для пустого файла, получено %d", len(fields))
+		t.Errorf("Expected 0 fields for empty file, got %d", len(fields))
 	}
 }
 
 func TestLoadEnvFileOnlyComments(t *testing.T) {
-	// Создаем .env файл только с комментариями
+	// Create .env file with only comments
 	tempDir := t.TempDir()
 	envFile := filepath.Join(tempDir, "comments.env")
 
-	envContent := `# Это комментарий
-# Еще один комментарий
-# И еще один
+	envContent := `# This is a comment
+# Another comment
+# And one more
 `
 
 	err := os.WriteFile(envFile, []byte(envContent), 0644)
 	if err != nil {
-		t.Fatalf("Не удалось создать .env файл с комментариями: %v", err)
+		t.Fatalf("Failed to create .env file with comments: %v", err)
 	}
 
 	fields, err := envied.LoadEnvFile(envFile)
 	if err != nil {
-		t.Fatalf("LoadEnvFile() вернул ошибку: %v", err)
+		t.Fatalf("LoadEnvFile() returned error: %v", err)
 	}
 
 	if len(fields) != 0 {
-		t.Errorf("Ожидалось 0 полей для файла только с комментариями, получено %d", len(fields))
+		t.Errorf("Expected 0 fields for file with only comments, got %d", len(fields))
 	}
 }
