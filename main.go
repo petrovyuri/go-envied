@@ -185,18 +185,8 @@ func generateObfuscatedField(fieldName string, fieldType FieldType, value string
 			Value:     encryptedValues,
 		}, nil
 
-	case FieldTypeFloat:
-		// For float64, we'll treat it as string for now
-		keys, encryptedValues := ObfuscateString(value, seed)
-		return &ObfuscationResult{
-			KeyName:   fmt.Sprintf("_enviedkey%s", fieldName),
-			ValueName: fmt.Sprintf("_envieddata%s", fieldName),
-			Key:       keys,
-			Value:     encryptedValues,
-		}, nil
-
 	default:
-		// For int and bool, no obfuscation needed
+		// Only strings are obfuscated, other types (int, bool, float64) are not obfuscated
 		return nil, nil
 	}
 }
@@ -408,7 +398,10 @@ func GenerateFromConfigFile(configFilePath string) error {
 				if err != nil {
 					return fmt.Errorf("failed to obfuscate field %s: %w", field.EnvName, err)
 				}
-				obfuscated[field.EnvName] = result
+				// Only add to map if result is not nil (i.e., field was actually obfuscated)
+				if result != nil {
+					obfuscated[field.EnvName] = result
+				}
 			}
 		}
 
@@ -597,8 +590,9 @@ func generateCodeDirectly(file *os.File, data interface{}) error {
 			if obfuscated == nil {
 				continue // Skip fields that don't need obfuscation
 			}
-			// Write key constant with environment prefix
-			keyConstName := fmt.Sprintf("%s_%s", strings.ToUpper(envName), obfuscated.KeyName)
+			// Write key constant with environment prefix (private variable - starts with lowercase)
+			envPrefixLower := strings.ToLower(envName)
+			keyConstName := fmt.Sprintf("%s%s", envPrefixLower, obfuscated.KeyName)
 			fmt.Fprintf(file, "// Static key for %s in %s environment\n", fieldName, envName)
 			fmt.Fprintf(file, "var %s = ", keyConstName)
 
@@ -620,9 +614,10 @@ func generateCodeDirectly(file *os.File, data interface{}) error {
 				fmt.Fprintf(file, "%v\n\n", key)
 			}
 
-			// Write value constant if different from field name
+			// Write value constant if different from field name (private variable - starts with lowercase)
 			if obfuscated.ValueName != fieldName {
-				valueConstName := fmt.Sprintf("%s_%s", strings.ToUpper(envName), obfuscated.ValueName)
+				envPrefixLower := strings.ToLower(envName)
+				valueConstName := fmt.Sprintf("%s%s", envPrefixLower, obfuscated.ValueName)
 				fmt.Fprintf(file, "// Static encrypted data for %s in %s environment\n", fieldName, envName)
 				fmt.Fprintf(file, "var %s = []int{", valueConstName)
 
@@ -655,31 +650,24 @@ func generateCodeDirectly(file *os.File, data interface{}) error {
 		fmt.Fprintf(file, "\treturn &%sConfig{\n", envData.StructName)
 
 		for _, field := range envData.Fields {
-			if obfuscated, exists := envData.Obfuscated[field.EnvName]; exists {
-				envPrefix := strings.ToUpper(envName)
-				switch field.Type {
-				case FieldTypeString:
-					keyConstName := fmt.Sprintf("%s_%s", envPrefix, obfuscated.KeyName)
-					valueConstName := fmt.Sprintf("%s_%s", envPrefix, obfuscated.ValueName)
-					fmt.Fprintf(file, "\t\t%s: envied.DeobfuscateString(%s, %s),\n", field.EnvName, keyConstName, valueConstName)
-				case FieldTypeFloat:
-					keyConstName := fmt.Sprintf("%s_%s", envPrefix, obfuscated.KeyName)
-					valueConstName := fmt.Sprintf("%s_%s", envPrefix, obfuscated.ValueName)
-					fmt.Fprintf(file, "\t\t%s: envied.ParseFloat(envied.DeobfuscateString(%s, %s)),\n", field.EnvName, keyConstName, valueConstName)
-				case FieldTypeInt:
-					fmt.Fprintf(file, "\t\t%s: envied.ParseInt(\"%s\"),\n", field.EnvName, field.Value)
-				case FieldTypeBool:
-					fmt.Fprintf(file, "\t\t%s: envied.ParseBool(\"%s\"),\n", field.EnvName, field.Value)
-				default:
-					fmt.Fprintf(file, "\t\t%s: \"%s\",\n", field.EnvName, field.Value)
-				}
+			if obfuscated, exists := envData.Obfuscated[field.EnvName]; exists && obfuscated != nil {
+				// Only strings can be obfuscated
+				envPrefixLower := strings.ToLower(envName)
+				keyConstName := fmt.Sprintf("%s%s", envPrefixLower, obfuscated.KeyName)
+				valueConstName := fmt.Sprintf("%s%s", envPrefixLower, obfuscated.ValueName)
+				fmt.Fprintf(file, "\t\t%s: envied.DeobfuscateString(%s, %s),\n", field.EnvName, keyConstName, valueConstName)
 			} else {
-				// For int and bool, use simple parsing functions
+				// For non-obfuscated fields (int, bool, float64, string), use simple parsing functions
 				switch field.Type {
 				case FieldTypeInt:
 					fmt.Fprintf(file, "\t\t%s: envied.ParseInt(\"%s\"),\n", field.EnvName, field.Value)
 				case FieldTypeBool:
 					fmt.Fprintf(file, "\t\t%s: envied.ParseBool(\"%s\"),\n", field.EnvName, field.Value)
+				case FieldTypeFloat:
+					fmt.Fprintf(file, "\t\t%s: envied.ParseFloat(\"%s\"),\n", field.EnvName, field.Value)
+				case FieldTypeString:
+					// String should be obfuscated, but if not, use as-is
+					fmt.Fprintf(file, "\t\t%s: \"%s\",\n", field.EnvName, field.Value)
 				default:
 					fmt.Fprintf(file, "\t\t%s: \"%s\",\n", field.EnvName, field.Value)
 				}
